@@ -1,0 +1,23 @@
+{
+  "name": "a2_multi-platform-interaction",
+  "version": "1.0.0",
+  "description": "Contains the source code for Assignment 2: Multi-Platform Interaction for the Design Studio III course.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AChase1/A2_multi-platform-interaction.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AChase1/A2_multi-platform-interaction/issues"
+  },
+  "homepage": "https://github.com/AChase1/A2_multi-platform-interaction#readme",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
