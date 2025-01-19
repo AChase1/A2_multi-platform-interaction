@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Flow VR</title>
+        <!-- IMPORTS -->
+        <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+
+        <script>
+            AFRAME.registerComponent('start_experience', {
+                init: function(){
+                    // when called, can assume A-Frame scene is ready
+                    console.log('scene loaded');
+                    document.querySelector('#user-gesture-button').style.display='block';
+                }
+            });
+        </script>
+    </head>
+    <body>
+        <a-scene>
+        </a-scene>
+    </body>
+</html>
