@@ -19,9 +19,15 @@ document.addEventListener("DOMContentLoaded", function () {
         // delete any existing electrons
         const existingElectron = document.getElementById("interactiveElectron");
         if (existingElectron != null) {
-            scene.removeChild(existingElectron);
-            console.log("Electron was destroyed");
+            electronComponent = existingElectron.components.electron;
+            if (!electronComponent.data.isAttached) {
+                console.log("Is Attached: " + electronComponent.data.isAttached);
+                existingElectron.parentNode.removeChild(existingElectron);
+                console.log("Electron was destroyed");
+            }
         }
+
+
 
         // instantiate electron
         const newElectron = document.createElement("a-entity");

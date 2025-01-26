@@ -5,6 +5,7 @@ AFRAME.registerComponent('electron', {
         color: { type: "color", default: "#fafa37" },
         glowIntensity: { type: "number", default: 1.5 },
         isSelected: { type: "boolean", default: false },
+        isAttached: { type: "boolean", default: false },
         audioSrc: { type: "string", default: "assets/sounds/electron_hum.mp3" },
     },
 
@@ -32,13 +33,14 @@ AFRAME.registerComponent('electron', {
 
     tick: function () {
         const camera = document.getElementById("pov_cam");
+
         if (camera == null) {
             console.log("Cannot find camera");
             return;
         }
 
         if (this.data.isSelected) {
-
+            console.log('Electron is selected');
             // attach electron to the camera's position and direction (if selected)
             const cameraPosition = new THREE.Vector3();
             const cameraDirection = new THREE.Vector3();
@@ -46,6 +48,20 @@ AFRAME.registerComponent('electron', {
             camera.object3D.getWorldDirection(cameraDirection);
             const newElectronPosition = cameraPosition.clone().add(cameraDirection.clone().multiplyScalar(-1));
             this.el.setAttribute("position", newElectronPosition);
+        }
+
+        if (this.data.isAttached) {
+            console.log("Electron is attached");
+            const orbitalShell = document.getElementById("orbitalShell");
+            if (orbitalShell == null) {
+                console.log("Cannot find the orbital shell's position");
+                return;
+            }
+            // Attach the electron to the orbital shell
+            if (this.el.parentNode !== orbitalShell) {
+                this.el.setAttribute("position", { x: orbitalShellRadius, y: 0, z: 0 });
+                orbitalShell.appendChild(this.el);
+            }
         }
     },
 
