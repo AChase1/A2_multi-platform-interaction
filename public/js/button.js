@@ -20,8 +20,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 // instantiate electron
                 const newElectron = document.createElement("a-entity");
                 newElectron.setAttribute("id", "interactiveElectron");
+                newElectron.setAttribute("sound", "src:assets/sounds/electron_hum.mp3; loop:true; autoplay:true; volume:0.3");
                 newElectron.setAttribute("position", "0 1.9 -2");
-                newElectron.setAttribute("geometry", "primitive:sphere; radius:0.1; ");
+                newElectron.setAttribute("geometry", "primitive:sphere; radius:0.1;");
                 newElectron.setAttribute("material", "color:#fafa37");
                 scene.appendChild(newElectron);
                 console.log("New electron created");
