@@ -1,10 +1,10 @@
 AFRAME.registerComponent('electron', {
     schema: {
         position: { type: "vec3", default: { x: 0, y: 1.9, z: -2 } },
-        radius: { type: "number", default: "0.1" },
+        radius: { type: "number", default: 0.1 },
         color: { type: "color", default: "#fafa37" },
-        glowIntensity: { type: "number", default: "1.5" },
-        isSelected: { type: "boolean", default: "false" },
+        glowIntensity: { type: "number", default: 1.5 },
+        isSelected: { type: "boolean", default: false },
         audioSrc: { type: "string", default: "assets/sounds/electron_hum.mp3" },
     },
 
