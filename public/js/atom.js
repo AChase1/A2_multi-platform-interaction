@@ -1,34 +1,39 @@
-const positiveCharge = "#3dadf2";
-const negativeCharge = "#f23a29";
-const orbitalShellRadius = 1.5;
-const nucleusOrigin = { x: 4.0, y: 1.6, z: -2 };
-const nucleusOffset = [
-    { x: 0.15, y: 0, z: 0 },
-    { x: -0.15, y: 0, z: 0 },
-    { x: 0, y: 0.15, z: 0 },
-    { x: 0, y: -0.15, z: 0 },
-    { x: 0, y: 0, z: 0.15 },
-    { x: 0, y: 0, z: -0.15 },
-]
+
+class AtomConstants {
+    static positiveColor = "#3dadf2";
+    static negativeColor = "#f23a29";
+    static orbitalShellRadius = 1.5;
+    static nucleusOrigin = { x: 4.0, y: 1.6, z: -2 };
+    static nucleusOffset = [
+        { x: 0.15, y: 0, z: 0 },
+        { x: -0.15, y: 0, z: 0 },
+        { x: 0, y: 0.15, z: 0 },
+        { x: 0, y: -0.15, z: 0 },
+        { x: 0, y: 0, z: 0.15 },
+        { x: 0, y: 0, z: -0.15 },
+    ];
+}
 
 AFRAME.registerComponent('atom', {
     schema: {
+        numberOfShells: { type: "number", default: 1 },
+        numberOfElectrons: { type: "number", default: 0 },
     },
 
     init: function () {
         const nucleusGroup = document.createElement('a-entity');
-        nucleusGroup.setAttribute("position", nucleusOrigin);
+        nucleusGroup.setAttribute("position", AtomConstants.nucleusOrigin);
 
         // create nucleus
         for (let i = 0; i < 6; i++) {
-            const particleColor = i < 3 == 0 ? positiveCharge : negativeCharge;
+            const particleColor = i < 3 == 0 ? AtomConstants.positiveColor : AtomConstants.negativeColor;
             let particle = document.createElement("a-entity");
             let geometry = new THREE.SphereGeometry(0.3, 32, 32);
             let material = new THREE.MeshStandardMaterial({ color: particleColor, emissive: particleColor, emissiveIntensity: 1.5 });
             let mesh = new THREE.Mesh(geometry, material);
 
             particle.setObject3D('mesh', mesh);
-            const particlePosition = { x: nucleusOffset[i].x, y: nucleusOffset[i].y, z: nucleusOffset[i].z };
+            const particlePosition = { x: AtomConstants.nucleusOffset[i].x, y: AtomConstants.nucleusOffset[i].y, z: AtomConstants.nucleusOffset[i].z };
             particle.setAttribute("position", particlePosition);
             particle.setAttribute("class", "interactive");
             nucleusGroup.appendChild(particle);
@@ -44,15 +49,16 @@ AFRAME.registerComponent('atom', {
         });
 
         this.el.appendChild(nucleusGroup);
+        this.el.setAttribute("id", "atom");
 
         // create electron orbital shell
         const electronOrbitalShell = document.createElement("a-entity");
-        let geometry = new THREE.TorusGeometry(orbitalShellRadius, 0.025, 100);
+        let geometry = new THREE.TorusGeometry(AtomConstants.orbitalShellRadius, 0.025, 100);
         let material = new THREE.MeshStandardMaterial({ color: "#ffffff" });
         let mesh = new THREE.Mesh(geometry, material);
 
         electronOrbitalShell.setObject3D('mesh', mesh);
-        electronOrbitalShell.setAttribute("position", nucleusOrigin);
+        electronOrbitalShell.setAttribute("position", AtomConstants.nucleusOrigin);
         this.el.appendChild(electronOrbitalShell);
         electronOrbitalShell.setAttribute("id", "orbitalShell");
         electronOrbitalShell.setAttribute("class", "interactive");
@@ -83,6 +89,7 @@ AFRAME.registerComponent('atom', {
 
             electron.setAttribute("electron", { isAttached: true, isSelected: false });
             electron.setAttribute("id", "attachedElectron");
+
             console.log("Electron is attached to the atom");
         });
     }

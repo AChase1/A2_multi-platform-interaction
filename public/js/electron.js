@@ -1,12 +1,21 @@
+class ElectronConstants {
+    static radius = 0.1;
+    static color = "#fafa37";
+    static glowIntensity = 1.5;
+    static audioSrc = "assets/sounds/electron_hum.mp3";
+    static startingPosition = { x: 0, y: 1.9, z: -2 };
+    static attachedSpacingAngle = 10 * (Math.PI / 180);
+}
+
 AFRAME.registerComponent('electron', {
     schema: {
-        position: { type: "vec3", default: { x: 0, y: 1.9, z: -2 } },
-        radius: { type: "number", default: 0.1 },
-        color: { type: "color", default: "#fafa37" },
-        glowIntensity: { type: "number", default: 1.5 },
+        position: { type: "vec3", default: ElectronConstants.startingPosition },
+        radius: { type: "number", default: ElectronConstants.radius },
+        color: { type: "color", default: ElectronConstants.color },
+        glowIntensity: { type: "number", default: ElectronConstants.glowIntensity },
         isSelected: { type: "boolean", default: false },
         isAttached: { type: "boolean", default: false },
-        audioSrc: { type: "string", default: "assets/sounds/electron_hum.mp3" },
+        audioSrc: { type: "string", default: ElectronConstants.audioSrc },
     },
 
     init: function () {
@@ -53,14 +62,32 @@ AFRAME.registerComponent('electron', {
         if (this.data.isAttached) {
             console.log("Electron is attached");
             const orbitalShell = document.getElementById("orbitalShell");
+            const atom = document.getElementById("atom");
+            if (atom == null) {
+                console.log("Cannot find atom");
+                return;
+            }
+
             if (orbitalShell == null) {
                 console.log("Cannot find the orbital shell's position");
                 return;
             }
             // Attach the electron to the orbital shell
             if (this.el.parentNode !== orbitalShell) {
-                this.el.setAttribute("position", { x: orbitalShellRadius, y: 0, z: 0 });
+                const attachedElectrons = atom.components.atom.data.numberOfElectrons;
+                console.log("Electron Count: " + attachedElectrons);
+                if (attachedElectrons < 1) {
+                    this.el.setAttribute("position", { x: AtomConstants.orbitalShellRadius, y: 0, z: 0 });
+                } else {
+                    const electronCount = attachedElectrons;
+                    const electronPosition = { x: 0, y: 0, z: 0 };
+                    electronPosition.x = Math.cos(ElectronConstants.attachedSpacingAngle * electronCount) * AtomConstants.orbitalShellRadius;
+                    electronPosition.y = Math.sin(ElectronConstants.attachedSpacingAngle * electronCount) * AtomConstants.orbitalShellRadius;
+                    this.el.setAttribute("position", electronPosition);
+                }
+
                 orbitalShell.appendChild(this.el);
+                atom.components.atom.data.numberOfElectrons++;
             }
         }
     },
