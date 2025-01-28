@@ -5,6 +5,7 @@ class ElectronConstants {
     static audioSrc = "assets/sounds/electron_hum.mp3";
     static startingPosition = { x: 0, y: 1.9, z: -2 };
     static attachedSpacingAngle = 10 * (Math.PI / 180);
+    static cameraOffsetPosition = { x: 0.7, y: -0.6, z: -1.0 };
 }
 
 AFRAME.registerComponent('electron', {
@@ -34,63 +35,17 @@ AFRAME.registerComponent('electron', {
         this.audio.setAttribute("loop", "true");
         this.el.appendChild(this.audio);
 
+        this.el.setAttribute("class", "interactive");
+        this.el.setAttribute("id", "electron");
+
         // add listener for electron interaction
-        this.el.addEventListener('click', () => {
-            this.data.isSelected = true;
-        });
+        this.el.addEventListener('click', () => attachToCamera(this.el));
     },
-
-    tick: function () {
-        const camera = document.getElementById("pov_cam");
-
-        if (camera == null) {
-            console.log("Cannot find camera");
-            return;
-        }
-
-        if (this.data.isSelected) {
-            console.log('Electron is selected');
-            // attach electron to the camera's position and direction (if selected)
-            const cameraPosition = new THREE.Vector3();
-            const cameraDirection = new THREE.Vector3();
-            camera.object3D.getWorldPosition(cameraPosition);
-            camera.object3D.getWorldDirection(cameraDirection);
-            const newElectronPosition = cameraPosition.clone().add(cameraDirection.clone().multiplyScalar(-1));
-            this.el.setAttribute("position", newElectronPosition);
-        }
-
-        if (this.data.isAttached) {
-            console.log("Electron is attached");
-            const orbitalShell = document.getElementById("orbitalShell");
-            const atom = document.getElementById("atom");
-            if (atom == null) {
-                console.log("Cannot find atom");
-                return;
-            }
-
-            if (orbitalShell == null) {
-                console.log("Cannot find the orbital shell's position");
-                return;
-            }
-            // Attach the electron to the orbital shell
-            if (this.el.parentNode !== orbitalShell) {
-                const attachedElectrons = atom.components.atom.data.numberOfElectrons;
-                console.log("Electron Count: " + attachedElectrons);
-                if (attachedElectrons < 1) {
-                    this.el.setAttribute("position", { x: AtomConstants.orbitalShellRadius, y: 0, z: 0 });
-                } else {
-                    const electronCount = attachedElectrons;
-                    const electronPosition = { x: 0, y: 0, z: 0 };
-                    electronPosition.x = Math.cos(ElectronConstants.attachedSpacingAngle * electronCount) * AtomConstants.orbitalShellRadius;
-                    electronPosition.y = Math.sin(ElectronConstants.attachedSpacingAngle * electronCount) * AtomConstants.orbitalShellRadius;
-                    this.el.setAttribute("position", electronPosition);
-                }
-
-                orbitalShell.appendChild(this.el);
-                atom.components.atom.data.numberOfElectrons++;
-            }
-        }
-    },
-
-
 });
+
+function attachToCamera(electron) {
+    const camera = document.getElementById("pov_cam");
+    if (camera == null) return;
+    camera.appendChild(electron);
+    electron.setAttribute("position", ElectronConstants.cameraOffsetPosition);
+};

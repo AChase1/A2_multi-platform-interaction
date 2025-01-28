@@ -1,38 +1,31 @@
 // On button click
 document.addEventListener("DOMContentLoaded", function () {
-    const button = document.getElementById("button");
-    const scene = document.querySelector("a-scene");
-    if (scene == null) {
-        console.log("Cannot find the scene");
-        return;
-    }
-    if (button == null) {
-        console.log("Cannot find the button");
-        return;
-    }
 
     button.addEventListener("click", () => {
+        const scene = document.querySelector("a-scene");
+        const button = document.getElementById("button");
+        const camera = document.getElementById("pov_cam");
+        if (scene == null) return;
+        if (button == null) return;
+        if (camera == null) return;
 
         // play button click sound
         button.components.sound.playSound();
 
         // delete any existing electrons
-        const existingElectron = document.getElementById("interactiveElectron");
-        if (existingElectron != null) {
-            electronComponent = existingElectron.components.electron;
-            if (!electronComponent.data.isAttached) {
-                console.log("Is Attached: " + electronComponent.data.isAttached);
-                existingElectron.parentNode.removeChild(existingElectron);
-                console.log("Electron was destroyed");
-            }
-        }
+        const existingElectron = Array.from(scene.children).filter(child => child.getAttribute("id") == "electron")[0];
+        const selectedElectron = Array.from(camera.children).filter(child => child.getAttribute("id") == "electron")[0];
 
+        if (existingElectron != undefined) {
+            existingElectron.parentNode.removeChild(existingElectron);
+        }
+        if (selectedElectron != undefined) {
+            selectedElectron.parentNode.removeChild(selectedElectron);
+        }
 
 
         // instantiate electron
         const newElectron = document.createElement("a-entity");
-        newElectron.setAttribute("id", "interactiveElectron");
-        newElectron.setAttribute("class", "interactive");
         newElectron.setAttribute("electron", "");
         scene.appendChild(newElectron);
         console.log("New electron created");
