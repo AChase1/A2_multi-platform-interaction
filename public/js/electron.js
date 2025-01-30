@@ -10,7 +10,6 @@ class ElectronConstants {
 
 AFRAME.registerComponent('electron', {
     schema: {
-        position: { type: "vec3", default: ElectronConstants.startingPosition },
         radius: { type: "number", default: ElectronConstants.radius },
         color: { type: "color", default: ElectronConstants.color },
         glowIntensity: { type: "number", default: ElectronConstants.glowIntensity },
@@ -25,7 +24,6 @@ AFRAME.registerComponent('electron', {
         this.mesh = new THREE.Mesh(this.geometry, this.material);
 
         this.el.setObject3D('mesh', this.mesh);
-        this.el.setAttribute("position", this.data.position);
         console.log("Electron mesh created");
 
         // attach hum audio to electron's position
