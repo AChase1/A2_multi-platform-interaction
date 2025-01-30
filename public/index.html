@@ -8,7 +8,7 @@
     <script src="js/button.js"></script>
     <script src="js/electron.js"></script>
     <script src="js/atom.js"></script>
-
+    <script src="js/atom_vortex.js"></script>
     <script>
       AFRAME.registerComponent("start_experience", {
         init: function () {
@@ -38,24 +38,12 @@
         ></audio>
       </a-assets>
 
-      <!-- BUTTON -->
-      <a-entity id="generate_electron" position="0 0 -2">
-        <a-entity
-          id="button_pedestal"
-          position="0 0.55 0"
-          geometry="primitive:box; width:0.35; depth: 0.35; height:1.1;"
-          material="color:#004400"
-        ></a-entity>
-        <a-entity
-          id="button"
-          class="interactive"
-          position="0 1.15 0"
-          animation__click="property:position.y; to:1.15; from:1.08; startEvents:click; dur:300;"
-          sound="src:#button_click;  "
-          geometry="primitive:cylinder; height:0.2; radius:0.15;"
-          material="color:#ff0000"
-        ></a-entity>
-      </a-entity>
+      <!-- ATOM VORTEX -->
+      <a-entity
+        id="unstable-nucleus"
+        class="interactive"
+        atom-vortex
+      ></a-entity>
 
       <!-- ATOM -->
       <a-entity id="atom" class="interactive" atom></a-entity>
@@ -77,7 +65,13 @@
       </a-entity>
 
       <!-- ENVIRONMENT -->
-      <a-entity id="environment" environment="preset:default"> </a-entity>
+      <a-entity
+        id="environment"
+        geometry="primitive:sphere; radius:20;"
+        material="color:#000000; side:back; shader:flat;"
+        position="0 0 -3"
+      >
+      </a-entity>
 
       <!-- USER GESTURE HTML-->
       <div id="user-gesture-overlay">
