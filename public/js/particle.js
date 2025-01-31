@@ -81,7 +81,7 @@ AFRAME.registerComponent('particle', {
             this.data.movingToAtom = false;
             this.el.parentNode.removeChild(this.el);
             atom.components["atom"].changeElement(true);
-            atom.components["atom"].resetAtom(1);
+            atom.components["atom"].resetAtom(1, true);
             atom.components["atom"].addElectron();
 
             return;

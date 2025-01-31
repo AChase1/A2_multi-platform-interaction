@@ -10,6 +10,7 @@
     <script src="js/atom_vortex.js"></script>
     <script src="js/element_panel.js"></script>
     <script src="js/vr_logic.js"></script>
+    <link rel="stylesheet" href="css/user-gesture.css" />
     <script>
       AFRAME.registerComponent("start_experience", {
         init: function () {
@@ -24,6 +25,12 @@
       const startExperience = function () {
         // hide button
         document.querySelector("#user-gesture-overlay").style.display = "none";
+
+        //play ambient sound
+        const ambientSounds = document.querySelectorAll(".background-sound");
+        ambientSounds.forEach(function (soundEntity) {
+          soundEntity.components["sound"].playSound();
+        });
       };
     </script>
   </head>
@@ -32,8 +39,20 @@
       <!--ASSETS-->
       <a-assets>
         <audio
-          id="button_click"
-          src="assets/sounds/button_click.mp3"
+          id="ambient-sound"
+          src="assets/sounds/ambient_sound.mp3"
+          preload="auto"
+          crossorigin="anonymous"
+        ></audio>
+        <audio
+          id="fission-explosion"
+          src="assets/sounds/fission_explosion.mp3"
+          preload="auto"
+          crossorigin="anonymous"
+        ></audio>
+        <audio
+          id="plop-sound"
+          src="assets/sounds/plop_sound.mp3"
           preload="auto"
           crossorigin="anonymous"
         ></audio>
@@ -89,10 +108,15 @@
       >
       </a-entity>
 
+      <a-entity
+        class="background-sound"
+        sound="src:#ambient-sound; autoplay:false; loop:true; positional:false; volume:0.3;"
+      ></a-entity>
+
       <!-- USER GESTURE HTML-->
       <div id="user-gesture-overlay">
         <div class="center">
-          <button id="user-gesture-button" onClick="startExperience();">
+          <button id="user-gesture-button" onclick="startExperience()">
             Enter Experience
           </button>
         </div>
