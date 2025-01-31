@@ -1,6 +1,6 @@
 AFRAME.registerComponent('atom-vortex', {
     init: function () {
-        this.numberOfAtoms = 500;
+        this.numberOfAtoms = 120;
         const atom = document.getElementById("main-atom");
         atom.setAttribute("position", {
             x: 0,

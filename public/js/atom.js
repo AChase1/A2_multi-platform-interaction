@@ -64,8 +64,10 @@ AFRAME.registerComponent('atom', {
 
         if (!this.data.isUnstable) {
             const elementPanel = document.getElementById("panel");
-            if (elementPanel.components["element-panel"] != undefined) {
+            const vrElementPanel = document.getElementById("vr-panel");
+            if (elementPanel.components["element-panel"] != undefined && vrElementPanel.components["element-panel"] != undefined) {
                 elementPanel.components["element-panel"].displayElementInfo(this.data.numProtons);
+                vrElementPanel.components["element-panel"].displayElementInfo(this.data.numProtons);
             }
         }
         this.nucleusGroup = nucleusGroup;
