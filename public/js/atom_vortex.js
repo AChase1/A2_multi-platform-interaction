@@ -1,7 +1,7 @@
 AFRAME.registerComponent('atom-vortex', {
     init: function () {
-        this.numberOfAtoms = 200;
-        const atom = document.getElementById("atom");
+        this.numberOfAtoms = 500;
+        const atom = document.getElementById("main-atom");
         atom.setAttribute("position", {
             x: 0,
             y: 1.6,
@@ -11,7 +11,8 @@ AFRAME.registerComponent('atom-vortex', {
             const newAtom = document.createElement("a-entity");
             newAtom.setAttribute("atom", {
                 numOrbitalShells: 0,
-                nucleusRadius: 0.1,
+                numProtons: 8,
+                numNeutrons: 8,
                 isUnstable: true,
             });
 

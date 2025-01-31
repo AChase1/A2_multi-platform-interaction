@@ -1,30 +1,25 @@
 
 class AtomConstants {
-    static protonColor = "#3dadf2";
-    static neutronColor = "#f23a29";
     static orbitalShellColor = "#808080";
     static orbitalShellRadius = 1.5;
     static nucleusOrigin = { x: 0, y: 1.6, z: -3 };
-    static unstableNucleusOrigin = { x: 0, y: 1.3, z: -2 };
 }
 
 AFRAME.registerComponent('atom', {
     schema: {
         numOrbitalShells: { type: "number", default: 1 },
-        nucleusRadius: { type: "number", default: 0.3 },
+        nucleonRadius: { type: "number", default: 0.1 },
+        numProtons: { type: "int", default: 1 },
+        numNeutrons: { type: "int", default: 0 },
         isUnstable: { type: "boolean", default: false },
     },
 
     init: function () {
-        this.offsetNucleusPosition = this.data.nucleusRadius / 2;
-        const randNum = Math.random();
-        const unstableColorRatio = randNum < 0.5 ? 5 : 1;
-        this.colorCondition = this.data.isUnstable ? unstableColorRatio : 3;
-        this.moveTowardsCamera = false;
-        this.attachToAtom = false;
-        this.createNucleus();
+        this.destroyAtom = false;
+        this.createNucleus(1);
         if (!this.data.isUnstable) {
             this.createOrbitalShell();
+            this.addElectron();
         }
 
         this.el.addEventListener("mouseenter", this.onMouseEnter.bind(this));
@@ -32,43 +27,60 @@ AFRAME.registerComponent('atom', {
         this.el.addEventListener('click', this.onMouseClick.bind(this));
         this.mouseEntered = false;
 
-        this.createCollisionBox();
+        //this.createCollisionBox();
     },
 
-    createNucleus: function () {
-        const nucleusGroup = document.createElement('a-entity');
-        //nucleusGroup.setAttribute("position", this.data.isUnstable ? AtomConstants.unstableNucleusOrigin : AtomConstants.nucleusOrigin);
-        nucleusGroup.setAttribute("id", "nucleusGroup");
+    createNucleon: function (dropletModelRadius, nucleonColor, nucleusGroup, index) {
+        const nucleon = document.createElement("a-entity");
+        const nucleonPosition = this.getNucleusPosition(dropletModelRadius, index, this.data.numProtons + this.data.numNeutrons);
+        nucleon.setAttribute("particle", { color: nucleonColor });
+        nucleon.setAttribute("position", nucleonPosition);
+        nucleusGroup.appendChild(nucleon);
+    },
 
-        // create nucleus (3 protons and 3 neutrons)
-        for (let i = 0; i < 6; i++) {
-            const particleColor = i < this.colorCondition == 0 ? AtomConstants.protonColor : AtomConstants.neutronColor;
-            let particle = document.createElement("a-entity");
-            let geometry = new THREE.SphereGeometry(this.data.nucleusRadius, 32, 32);
-            let material = new THREE.MeshStandardMaterial({ color: particleColor, emissive: particleColor, emissiveIntensity: 1.5 });
-            let mesh = new THREE.Mesh(geometry, material);
-            particle.setObject3D('mesh', mesh);
-            particle.setAttribute("position", this.getNucleusPosition(this.offsetNucleusPosition, i));
-            particle.setAttribute("class", "interactive");
-            particle.setAttribute("id", "nucleus");
-            if (i == 0) {
-                this.particleToEject = particle;
-            }
-            nucleusGroup.appendChild(particle);
+    createNucleus: function (nucleusRadiusMultiple) {
+        const nucleusGroup = document.createElement('a-entity');
+        nucleusGroup.setAttribute("id", "nucleusGroup");
+        const increments = Math.floor(this.data.numProtons / 10) + 1;
+        const dropletModelRadius = (increments * 0.1) * nucleusRadiusMultiple;
+
+        // create protons
+        for (let i = 0; i < this.data.numProtons; i++) {
+            this.createNucleon(dropletModelRadius, ParticleConstants.protonColor, nucleusGroup, i);
+        }
+
+        // create neutrons
+        for (let i = 0; i < this.data.numNeutrons; i++) {
+            this.createNucleon(dropletModelRadius, ParticleConstants.neutronColor, nucleusGroup, this.data.numProtons + i);
         }
 
         this.el.appendChild(nucleusGroup);
-
+        this.el.setAttribute("class", "interactive");
         if (this.data.isUnstable) {
             this.el.setAttribute("id", "unstable-atom");
         } else {
-            this.el.setAttribute("id", "atom");
+            this.el.setAttribute("id", "main-atom");
         }
 
-        this.el.setAttribute("class", "interactive");
-
-
+        if (!this.data.isUnstable) {
+            const elementPanel = document.getElementById("panel");
+            if (elementPanel.components["element-panel"] != undefined) {
+                elementPanel.components["element-panel"].displayElementInfo(this.data.numProtons);
+            }
+        }
         this.nucleusGroup = nucleusGroup;
+    },
+
+    getNucleusPosition: function (radius, index, numParticles) {
+        // Use a simple droplet model to arrange nucleons in a roughly spherical shape
+        const phi = Math.acos(1 - 2 * (index + 1) / numParticles);
+        const theta = Math.PI * (1 + Math.sqrt(5)) * (index + 1);
+
+        const x = radius * Math.sin(phi) * Math.cos(theta);
+        const y = radius * Math.sin(phi) * Math.sin(theta);
+        const z = radius * Math.cos(phi);
+
+        return { x: x, y: y, z: z };
     },
 
     createOrbitalShell: function () {
@@ -80,12 +92,10 @@ AFRAME.registerComponent('atom', {
         let material = new THREE.MeshStandardMaterial({ color: AtomConstants.orbitalShellColor });
         let mesh = new THREE.Mesh(geometry, material);
         electronOrbitalShell.setObject3D('mesh', mesh);
-        //electronOrbitalShell.setAttribute("position", AtomConstants.nucleusOrigin);
         this.el.appendChild(electronOrbitalShell);
 
         electronOrbitalShell.setAttribute("id", "orbitalShell");
         electronOrbitalShell.setAttribute("class", "interactive");
-        //electronOrbitalShell.setAttribute("position", AtomConstants.nucleusOrigin);
         this.orbitalShell = electronOrbitalShell;
 
     },
@@ -93,15 +103,13 @@ AFRAME.registerComponent('atom', {
     createCollisionBox: function () {
         const collisionBox = document.createElement('a-entity');
         collisionBox.setAttribute('geometry', {
-            primitive: 'box',
-            width: this.data.nucleusRadius * 4,
-            height: this.data.nucleusRadius * 4,
-            depth: this.data.nucleusRadius * 4
+            primitive: 'sphere',
+            radius: AtomConstants.orbitalShellRadius,
         });
         collisionBox.setAttribute('material', { opacity: 0.0 }); // Make the box invisible
         collisionBox.setAttribute('position', this.nucleusGroup.getAttribute('position'));
-        collisionBox.setAttribute('class', 'collision-box');
-        collisionBox.setAttribute('body', { type: 'static' }); // Enable collision detection
+        collisionBox.setAttribute('class', 'interactive');
+        //collisionBox.setAttribute('body', { type: 'static' }); // Enable collision detection
 
         this.el.appendChild(collisionBox);
     },
@@ -117,114 +125,45 @@ AFRAME.registerComponent('atom', {
         element.object3D.rotation.set(rotation.x, rotation.y, rotation.z);
     },
 
-    getCrossProduct: function (vectorOne, vectorTwo) {
-        return { x: ((vectorOne.y * vectorTwo.z) - (vectorOne.z * vectorTwo.y)), y: ((vectorOne.z * vectorTwo.x) - (vectorOne.x * vectorTwo.z)), z: ((vectorOne.x * vectorTwo.y) - (vectorOne.y * vectorTwo.x)), }
-    },
 
     tick: function () {
         this.rotateElement(this.nucleusGroup, true);
         if (!this.data.isUnstable) {
             this.rotateElement(this.orbitalShell, false);
         }
-
-        if (this.moveTowardsCamera) {
-            this.collectElectron();
-        }
-
-        if (this.attachToAtom) {
-            this.assignElectron();
-        }
     },
 
-    collectElectron: function () {
-        const camera = document.getElementById("pov_cam");
-        const cameraPosition = camera.getAttribute("position");
-        const offsetCameraPosition = { x: 0, y: 0, z: 0 };
-        offsetCameraPosition.x = cameraPosition.x + ElectronConstants.cameraOffsetPosition.x;
-        offsetCameraPosition.y = cameraPosition.y + ElectronConstants.cameraOffsetPosition.y;
-        offsetCameraPosition.z = cameraPosition.z + ElectronConstants.cameraOffsetPosition.z;
-        const scene = document.querySelector("a-scene");
 
-        const newElectron = Array.from(scene.children).filter(child => child.getAttribute("id") == "electron")[0];
 
-        const newElectronPosition = newElectron.getAttribute("position");
-        const distance = newElectronPosition.distanceTo(cameraPosition);
-
-        if (distance < 0.5) {
-            this.moveTowardsCamera = false;
-            camera.appendChild(newElectron);
-            newElectron.setAttribute("position", ElectronConstants.cameraOffsetPosition);
-            return;
-        }
-
-        const direction = new THREE.Vector3();
-        direction.subVectors(cameraPosition, newElectronPosition).normalize();
-        // Update velocity based on acceleration
-        const velocity = new THREE.Vector3();
-        velocity.addScaledVector(direction, 0.005 * 1000);
-        newElectronPosition.addScaledVector(velocity, 0.01);
-        newElectron.setAttribute("position", newElectronPosition);
-    },
-
-    assignElectron: function () {
-        const atomPosition = this.el.getAttribute("position");
-        //this.el.object3D.getWorldPosition(atomPosition);
-
-        const selectedElectronPosition = this.selectedElectron.getAttribute("position");
-        this.selectedElectron.object3D.getWorldPosition(selectedElectronPosition);
-        const distance = selectedElectronPosition.distanceTo(atomPosition);
-
-        //console.log(updatedElectronPosition);
-
-        if (distance < 0.1) {
-            this.attachToAtom = false;
-            const numAttachedElectrons = Array.from(this.orbitalShell.children).filter(child => child.getAttribute("id") == "electron").length;
-            let numOrbitalShells = Array.from(this.el.children).filter(current => current.getAttribute("id") == "orbitalShell").length;
-            if (numAttachedElectrons < 1) {
-                this.selectedElectron.setAttribute("position", { x: AtomConstants.orbitalShellRadius, y: 0, z: 0 });
-            } else {
-                if ((Math.pow(numOrbitalShells, 2) * 2) == numAttachedElectrons) {
-                    this.createOrbitalShell();
-                    numOrbitalShells++;
-                    const elementInfoPanel = document.getElementById("element-panel");
-                    elementInfoPanel.setAttribute("position", {
-                        x: (numOrbitalShells * AtomConstants.orbitalShellRadius) + 0.5,
-                        y: 1.2,
-                        z: 0,
-                    });
-                }
-                electronXPosition = Math.cos(ElectronConstants.attachedSpacingAngle * numAttachedElectrons) * (AtomConstants.orbitalShellRadius * numOrbitalShells);
-                electronYPosition = Math.sin(ElectronConstants.attachedSpacingAngle * numAttachedElectrons) * (AtomConstants.orbitalShellRadius * numOrbitalShells);
-                this.selectedElectron.setAttribute("position", { x: electronXPosition, y: electronYPosition, z: 0 });
+    addElectron: function () {
+        const numAttachedParticles = Array.from(this.orbitalShell.children).filter(child => child.getAttribute("id") == "particle").length;
+        let numOrbitalShells = Array.from(this.el.children).filter(current => current.getAttribute("id") == "orbitalShell").length;
+        const newElectron = document.createElement('a-entity');
+        newElectron.setAttribute('particle', { color: ParticleConstants.electronColor });
+        if (numAttachedParticles < 1) {
+            newElectron.setAttribute("position", { x: AtomConstants.orbitalShellRadius, y: 0, z: 0 });
+        } else {
+            if ((Math.pow(numOrbitalShells, 2) * 2) == numAttachedParticles) {
+                this.createOrbitalShell();
+                numOrbitalShells++;
+                const elementInfoPanel = document.getElementById("panel");
+                elementInfoPanel.setAttribute("position", {
+                    x: (numOrbitalShells * AtomConstants.orbitalShellRadius) + 0.5,
+                    y: 1.2,
+                    z: 0,
+                });
             }
-            this.orbitalShell.appendChild(this.selectedElectron);
-            return;
+            particleXPosition = Math.cos(ParticleConstants.attachedSpacingAngle * numAttachedParticles) * (AtomConstants.orbitalShellRadius * numOrbitalShells);
+            particleYPosition = Math.sin(ParticleConstants.attachedSpacingAngle * numAttachedParticles) * (AtomConstants.orbitalShellRadius * numOrbitalShells);
+            newElectron.setAttribute("position", { x: particleXPosition, y: particleYPosition, z: 0 });
+            const testPos = new THREE.Vector3();
+            newElectron.object3D.getWorldPosition(testPos)
+            console.log(testPos);
         }
-
-        const direction = new THREE.Vector3();
-        direction.subVectors(atomPosition, selectedElectronPosition).normalize();
-        // Update velocity based on acceleration
-        const velocity = new THREE.Vector3();
-        velocity.addScaledVector(direction, 0.005 * 1000);
-        selectedElectronPosition.addScaledVector(velocity, 0.01);
-        this.selectedElectron.setAttribute("position", selectedElectronPosition);
+        this.orbitalShell.appendChild(newElectron);
     },
 
-    getNucleusPosition: function (offset, index) {
-        const offsetList = [
-            { x: offset, y: 0, z: 0 },
-            { x: -offset, y: 0, z: 0 },
-            { x: 0, y: offset, z: 0 },
-            { x: 0, y: -offset, z: 0 },
-            { x: 0, y: 0, z: offset },
-            { x: 0, y: 0, z: -offset },
-        ];
-        return offsetList[index];
-    },
-
-    resetAtom: function (radius, offset) {
-        this.data.nucleusRadius = radius;
-        this.offsetNucleusPosition = offset;
+    resetAtom: function (nucleusRadiusMultiple) {
 
         // Remove existing nucleus elements
         const nucleusGroup = this.el.querySelector('#nucleusGroup');
@@ -232,77 +171,122 @@ AFRAME.registerComponent('atom', {
             this.el.removeChild(nucleusGroup);
         }
 
-        this.createNucleus();
-        //this.animateAtom();
+        this.createNucleus(nucleusRadiusMultiple);
+    },
+
+    adjustNeutronCount: function () {
+        const elementInfo = elementInfoDictionary[this.data.numProtons];
+        this.data.numNeutrons = elementInfo["mass"] - this.data.numProtons;
+    },
+
+    changeElement: function (addProton) {
+        addProton ? this.data.numProtons++ : this.data.numProtons--;
+        this.adjustNeutronCount();
+    },
+
+    removeElectron: function () {
+        const orbitalShells = Array.from(this.el.children).filter(child => child.getAttribute("id") == "orbitalShell");
+        let attachedParticles = [];
+        for (i = 0; i < orbitalShells.length; i++) {
+            const particles = Array.from(orbitalShells[i].children).filter(child => child.getAttribute("id") == "particle");
+            attachedParticles = attachedParticles.concat(particles);
+        }
+
+        const lastAttachedElectron = attachedParticles[attachedParticles.length - 1];
+        lastAttachedElectron.parentNode.removeChild(lastAttachedElectron);
+        if (orbitalShells.length > 1 && (Math.pow(orbitalShells.length - 1, 2) * 2) == attachedParticles.length - 1) {
+            this.orbitalShell.parentNode.removeChild(this.orbitalShell);
+            const orbitalShells = Array.from(this.el.children).filter(child => child.getAttribute("id") == "orbitalShell");
+            this.orbitalShell = orbitalShells[orbitalShells.length - 1];
+        }
+    },
+
+    splitAtom: function () {
+        const newParticle = document.createElement('a-entity');
+        newParticle.setAttribute('particle', { color: ParticleConstants.nuclearFissionColor });
+        newParticle.setAttribute('animation', {
+            property: 'scale',
+            to: { x: 10, y: 10, z: 10 },
+            from: { x: 1, y: 1, z: 1 },
+            dur: 500,
+            easing: 'easeOutQuad'
+        });
+
+        this.el.appendChild(newParticle);
+
+        // Add event listener to delete the particle after the animation ends
+        newParticle.addEventListener('animationcomplete', function () {
+
+            if (newParticle.parentElement.getAttribute("id") != "main-atom") {
+                console.log('destroyed');
+                newParticle.parentElement.parentNode.removeChild(newParticle.parentElement);
+            }
+            newParticle.parentNode.removeChild(newParticle);
+        });
     },
 
     onMouseEnter: function () {
-        if (!this.mouseEntered && this.data.isUnstable) {
-            this.resetAtom(0.05, 0.1);
+        if (!this.mouseEntered && this.data.numProtons >= 2) {
+            this.resetAtom(2);
             this.mouseEntered = true;
         }
     },
 
     onMouseLeave: function () {
-        if (this.mouseEntered && this.data.isUnstable) {
-            this.resetAtom(0.1, 0.05);
+        if (this.mouseEntered) {
+            this.resetAtom(1);
             this.mouseEntered = false;
         }
     },
 
     onMouseClick: function () {
         if (this.data.isUnstable) {
-            const newElectron = document.createElement("a-entity");
             const scene = document.querySelector("a-scene");
-            // Get the world position of the atom
+            const newParticle = document.createElement("a-entity");
+            newParticle.setAttribute("particle", {
+                color: ParticleConstants.protonColor,
+                movingToCamera: true,
+            });
+
             const atomPosition = new THREE.Vector3();
             this.el.object3D.getWorldPosition(atomPosition);
-            newElectron.setAttribute("electron", "");
-            newElectron.setAttribute("position", atomPosition);
-            scene.appendChild(newElectron);
-            this.moveTowardsCamera = true;
+
+            newParticle.setAttribute("position", atomPosition);
+            scene.appendChild(newParticle);
+            this.destroyAtom = true;
+            this.splitAtom();
+
             return;
         }
-        const electronList = Array.from(document.querySelectorAll("[id^='electron']"));
+
         const camera = document.getElementById("pov_cam");
-        const selectedElectron = Array.from(camera.children).filter(child => child.getAttribute("id") == "electron")[0];
-        const orbitalShells = Array.from(this.el.children).filter(child => child.getAttribute("id") == "orbitalShell");
-        let attachedElectrons = [];
-        for (i = 0; i < orbitalShells.length; i++) {
-            const electrons = Array.from(orbitalShells[i].children).filter(child => child.getAttribute("id") == "electron");
-            attachedElectrons = attachedElectrons.concat(electrons);
-        }
+        const cameraPosition = new THREE.Vector3();
+        camera.object3D.getWorldPosition(cameraPosition);
+        const selectedParticle = Array.from(camera.children).filter(child => child.getAttribute("id") == "particle")[0];
 
         // Remove last attached electron from orbital shell
         // When clicking atom with no selected electron
-        if ((selectedElectron == null || selectedElectron.isSelected == false) && attachedElectrons.length >= 1) {
-            if (electronList != null || electronList.childElementCount > 0) {
-                const numAttachedElectrons = attachedElectrons.length;
-                let lastAttachedElectron = attachedElectrons[attachedElectrons.length - 1];
-                this.orbitalShell.removeChild(lastAttachedElectron);
-                attachToCamera(lastAttachedElectron);
-                console.log((Math.pow(orbitalShells.length - 1, 2) * 2));
-                console.log(numAttachedElectrons);
-                if (orbitalShells.length > 1 && (Math.pow(orbitalShells.length - 1, 2) * 2) == numAttachedElectrons - 1) {
-                    this.orbitalShell.parentNode.removeChild(this.orbitalShell);
-                    const orbitalShells = Array.from(this.el.children).filter(child => child.getAttribute("id") == "orbitalShell");
-                    this.orbitalShell = orbitalShells[orbitalShells.length - 1];
-                }
-            }
+        if (selectedParticle == undefined && this.data.numProtons > 1) {
+            this.changeElement(false);
+            this.resetAtom(1);
+            this.removeElectron();
+            this.destroyAtom = false;
+            this.splitAtom();
             return;
         }
 
-        // Attach the selected electron to the orbital shell
-        if (selectedElectron != null) {
-            this.attachToAtom = true;
-            const selectedElectronPosition = selectedElectron.getAttribute("position");
-            selectedElectron.object3D.getWorldPosition(selectedElectronPosition);
-            selectedElectron.parentNode.removeChild(selectedElectron);
-            selectedElectron.setAttribute("position", selectedElectronPosition);
-            const scene = document.querySelector("a-scene");
-            scene.appendChild(selectedElectron);
+        if (selectedParticle != undefined) {
+            camera.removeChild(selectedParticle);
+            const newParticle = document.createElement("a-entity");
 
-            this.selectedElectron = selectedElectron;
+            newParticle.setAttribute("particle", {
+                color: ParticleConstants.protonColor,
+                movingToAtom: true,
+            });
+            newParticle.setAttribute("position", cameraPosition);
+
+            const scene = document.querySelector("a-scene");
+            scene.appendChild(newParticle);
         }
     }
 });
