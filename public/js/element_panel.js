@@ -4,7 +4,7 @@ const elementInfoDictionary = {
     3: elementMap("Lithium", "Li", "Alkali Metal", 6.94, "A metal that burns white, and was one of three elements (hydrogen and helium) produced by the Big Bang."),
     4: elementMap("Beryllium", "Be", "Alkaline Earth Metal", 9.012, "A lightweight metal where it's dust is toxic, its transparent to x-rays, and is used to build spacecrafts."),
     5: elementMap("Boron", "B", "Metalloid", 10.81, "An element essential for the growth of plants and is used in nuclear reactions."),
-    6: elementMap("Carbon", "C", "Nonmetal", 12.011, "A lightweight metal where its dust is toxic, its transparent to x-rays, and is used to build spacecrafts."),
+    6: elementMap("Carbon", "C", "Nonmetal", 12.011, "The primary element for all known life forms, and is synthetically used for aerospace, electronics, and medicine"),
     7: elementMap("Nitrogen", "N", "Nonmetal", 14.007, "A colorless, odorless gas that makes up 78% of the Earth's atmosphere."),
     8: elementMap("Oxygen", "O", "Nonmetal", 15.999, "A highly reactive nonmetal and oxidizing agent that readily forms oxides with most elements."),
     9: elementMap("Fluorine", "F", "Halogen", 18.998, "The most reactive and electronegative of all the elements."),
@@ -135,6 +135,10 @@ class PanelConstants {
 }
 
 AFRAME.registerComponent('element-panel', {
+    schema: {
+        position: { type: "vec3", default: { x: -2.5, y: 1.2, z: 0 } }
+    },
+
     init: function () {
         this.createPanel();
         this.isSelected = false;
@@ -151,14 +155,12 @@ AFRAME.registerComponent('element-panel', {
 
         this.el.appendChild(this.backgroundPanel);
 
-        this.el.setAttribute("position", {
-            x: -2.5,
-            y: 1.2,
-            z: 0
-        });
+        this.el.setAttribute("position", this.data.position);
 
         this.displayElementInfo(1);
     },
+
+
 
     createPanelBorder: function () {
         this.panelBorder = document.createElement("a-entity");

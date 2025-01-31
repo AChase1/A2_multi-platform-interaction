@@ -9,6 +9,7 @@
     <script src="js/atom.js"></script>
     <script src="js/atom_vortex.js"></script>
     <script src="js/element_panel.js"></script>
+    <script src="js/vr_logic.js"></script>
     <script>
       AFRAME.registerComponent("start_experience", {
         init: function () {
@@ -27,7 +28,7 @@
     </script>
   </head>
   <body>
-    <a-scene start_experience>
+    <a-scene start_experience vr-logic>
       <!--ASSETS-->
       <a-assets>
         <audio
@@ -38,15 +39,30 @@
         ></audio>
       </a-assets>
 
-      <!-- ELEMENT INFO PANEL -->
-
       <!-- ATOM VORTEX -->
       <a-entity id="unstable-nucleus" class="interactive" atom-vortex
         ><a-entity id="main-atom" class="interactive" atom></a-entity
         ><a-entity id="panel" element-panel></a-entity
       ></a-entity>
 
-      <!-- ATOM -->
+      <!-- HMD EXPERIENCE -->
+      <a-entity
+        id="right-hand"
+        laser-controls="hand:right;"
+        raycaster="objects:.interactive; far: 20; interval:200; lineColor:white;"
+      ></a-entity>
+
+      <a-entity
+        id="left-hand"
+        laser-controls="hand:left;"
+        raycaster="objects:.interactive; far: 20; interval:200; lineColor:white;"
+      ></a-entity>
+
+      <a-entity
+        id="vr-panel"
+        element-panel="position:0 0.3 -2"
+        visible="false"
+      ></a-entity>
 
       <!-- CAMERA & CURSOR -->
       <a-entity
