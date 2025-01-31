@@ -165,7 +165,26 @@ AFRAME.registerComponent('atom', {
         this.orbitalShell.appendChild(newElectron);
     },
 
-    resetAtom: function (nucleusRadiusMultiple) {
+    resetAtom: function (nucleusRadiusMultiple, playSound) {
+
+        if (playSound) {
+            const scene = document.querySelector("a-scene");
+            const atomPosition = new THREE.Vector3();
+            this.el.object3D.getWorldPosition(atomPosition);
+            const plopSound = document.createElement('a-entity');
+            plopSound.setAttribute('position', atomPosition);
+            scene.appendChild(plopSound);
+            plopSound.setAttribute("sound", {
+                src: "#plop-sound",
+                autoplay: true,
+                rolloffFactor: 0.5,
+                volume: 2
+            });
+
+            plopSound.addEventListener('sound-ended', () => {
+                plopSound.parentNode.removeChild(plopSound);
+            });
+        }
 
         // Remove existing nucleus elements
         const nucleusGroup = this.el.querySelector('#nucleusGroup');
@@ -204,6 +223,23 @@ AFRAME.registerComponent('atom', {
     },
 
     splitAtom: function () {
+
+        const scene = document.querySelector("a-scene");
+        const atomPosition = new THREE.Vector3();
+        this.el.object3D.getWorldPosition(atomPosition);
+        const explosionSound = document.createElement('a-entity');
+        explosionSound.setAttribute('position', atomPosition);
+        scene.appendChild(explosionSound);
+        explosionSound.setAttribute("sound", {
+            src: "#fission-explosion",
+            autoplay: true,
+            rolloffFactor: 0.5,
+        });
+
+        explosionSound.addEventListener('sound-ended', () => {
+            explosionSound.parentNode.removeChild(explosionSound);
+        });
+
         const newParticle = document.createElement('a-entity');
         newParticle.setAttribute('particle', { color: ParticleConstants.nuclearFissionColor });
         newParticle.setAttribute('animation', {
@@ -213,6 +249,10 @@ AFRAME.registerComponent('atom', {
             dur: 500,
             easing: 'easeOutQuad'
         });
+
+
+
+
 
         this.el.appendChild(newParticle);
 
@@ -229,14 +269,14 @@ AFRAME.registerComponent('atom', {
 
     onMouseEnter: function () {
         if (!this.mouseEntered && this.data.numProtons >= 2) {
-            this.resetAtom(2);
+            this.resetAtom(2, false);
             this.mouseEntered = true;
         }
     },
 
     onMouseLeave: function () {
         if (this.mouseEntered) {
-            this.resetAtom(1);
+            this.resetAtom(1, false);
             this.mouseEntered = false;
         }
     },
@@ -270,7 +310,7 @@ AFRAME.registerComponent('atom', {
         // When clicking atom with no selected electron
         if (selectedParticle == undefined && this.data.numProtons > 1) {
             this.changeElement(false);
-            this.resetAtom(1);
+            this.resetAtom(1, false);
             this.removeElectron();
             this.destroyAtom = false;
             this.splitAtom();
